@@ -1,0 +1,82 @@
+## This file is managed by Puppet
+## DO NOT edit manually
+## Put customization into separate .conf files under <%= scope['dnsmasq::params::confd_dir'] %>
+
+dhcp-no-override
+dhcp-authoritative
+
+<% if @bogus_priv -%>
+bogus-priv
+<% end -%>
+<% if @domain_needed -%>
+domain-needed
+<% end -%>
+<% if @read_ethers -%>
+read-ethers
+<% end -%>
+<% if @no_hosts -%>
+no-hosts
+<% end -%>
+<% if @addn_hosts -%>
+addn-hosts=<%= @addn_hosts %>
+<% end -%>
+<% if @listen_interfaces -%>
+<% @listen_interfaces.each do |iface| -%>
+interface=<%= iface %>
+<% end -%>
+<% end -%>
+<% if @listen_addresses -%>
+<% @listen_addresses.each do |addr| -%>
+listen-address=<%= addr %>
+<% end -%>
+<% end -%>
+<% if @except_interfaces -%>
+<% @except_interfaces.each do |iface| -%>
+except-interface=<%= iface %>
+<% end -%>
+<% end -%>
+<% if @no_dhcp_interfaces -%>
+<% @no_dhcp_interfaces.each do |iface| -%>
+no-dhcp-interface=<%= iface %>
+<% end -%>
+<% end -%>
+
+<% if @disable_dns -%>
+port 0
+<% end -%>
+<% if @log_dhcp -%>
+log-dhcp
+<% end -%>
+<% if @log_dns -%>
+log-queries
+<% end -%>
+
+<% if ! @upstream_servers.empty? -%>
+<% @upstream_servers.each do |domain,server| -%>
+server=/<%= domain %>/<%= server %>
+<% end -%>
+<% end -%>
+
+<% if @pxe -%>
+# this section for clients booting via network
+dhcp-vendorclass=pxe,PXEClient
+dhcp-range=net:pxe,<%= @pxe_range_start %>,<%= @pxe_range_end %>
+dhcp-boot=net:pxe,<%= @pxe_boot_file %><% if @pxe_listen_ip %>,<%= @pxe_listen_ip %><% end -%>
+<% end -%>
+
+<% if ! @dhcp_ranges.empty? -%>
+# dynamic and static dhcp ranges
+<% @dhcp_ranges.each do |r| -%>
+dhcp-range=<% if r['name'] %><%= r['name'] %>,<% end %><%= r['start'] %>,<%= r['end'] %><% if r['ttl'] %>,<%= r['ttl'] %><% end %> 
+<% end -%>
+<% end -%>
+
+<% if ! @static_hosts.empty? -%>
+# static hosts declaration
+<% @static_hosts.sort_by {|host,options| options['ip'].to_i}.each do |host,options| -%>
+dhcp-host=<%= options['mac'] %>,<%= options['ip'] %>
+<% end -%>
+<% end -%>
+
+# Include all files in a directory which end in .conf
+conf-dir=/etc/dnsmasq.d/,*.conf
