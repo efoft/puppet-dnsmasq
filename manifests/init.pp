@@ -50,19 +50,32 @@
 # [*upstream_servers*]
 #   Servers to query for specific domain. Format: { <domain> => <server ipa>, ... }
 #
-# [*pxe*]
-#   If true the specially tagged network range is included to server booting via network clients.
-#   Default: false
+# [*pxe_next_server*]
+#   IP of pxe boot server. If omitted then dnsmasq assumes IP of this server.
 #
-# [*pxe_range_start*] & [*pxe_range_end*]
-#   Address range for booting clients. Mandatory if *pxe* = true.
-#
-# [*pxe_listen_ip*]
-#   Optional parameter to specify on which IP to listen to bootp requests.
+# [*pxe_filename*]
+#   Name of boot image file for pxe booting.
 #
 # [*dhcp_ranges*]
-#   Array of hashes each specifying range and optionally network name and leasetime(ttl). Format:
-#   [{ 'start' => '192.168.1.2', 'end' => '192.168.1.254', 'name' => 'eth0', 'ttl' => '12h' }, ...]
+#   Hash specifying ranges of IP addresses. It can optionally contain the keys:
+#   - static_only: only static hosts are served
+#   - ttl: lease time, if not specified default 1h is used
+#   - pxe: set to true to enable pxe booting with this range
+#   - next_server: IP of pxe boot server, if omitted then IP of this server is used
+#   Example (hiera format):
+#   ---
+#   registered:
+#     start: 192.168.1.2
+#     end:   192.168.1.199
+#     static_only: true
+#   public:
+#     start: 192.168.1.220
+#     end:   192.168.1.240
+#     ttl:   5m
+#   pxe:
+#     start: 192.168.1.290
+#     end:   192.168.1.299
+#     pxe:   true
 #
 # [*static_hosts*]
 #   Static hosts declaration. Format:
@@ -70,32 +83,25 @@
 #   'comment' is optional and used for description only.
 #
 class dnsmasq(
-  Enum['present','absent'] $ensure  = 'present',
-  Boolean $bogus_priv               = true,
-  Boolean $domain_needed            = true,
-  Boolean $read_ethers              = false,
-  Boolean $no_hosts                 = false,
-  Optional[String] $addn_hosts      = undef,
-  Array $listen_interfaces          = [],
-  Array $listen_addresses           = [],
-  Array $except_interfaces          = [],
-  Array $no_dhcp_interfaces         = [],
-  Boolean $disable_dns              = false,
-  Boolean $log_dhcp                 = false,
-  Boolean $log_dns                  = false,
-  Hash $upstream_servers            = {},
-  Boolean $pxe                      = false,
-  Optional[String] $pxe_range_start = undef,
-  Optional[String] $pxe_range_end   = undef,
-  String $pxe_boot_file             = 'pxelinux.0',
-  Optional[String] $pxe_listen_ip   = undef,
-  Tuple $dhcp_ranges                = [],
-  Hash $static_hosts                = {},
+  Enum['present','absent'] $ensure                = 'present',
+  Boolean $bogus_priv                             = true,
+  Boolean $domain_needed                          = true,
+  Boolean $read_ethers                            = false,
+  Boolean $no_hosts                               = false,
+  Optional[String] $addn_hosts                    = undef,
+  Array $listen_interfaces                        = [],
+  Array $listen_addresses                         = [],
+  Array $except_interfaces                        = [],
+  Array $no_dhcp_interfaces                       = [],
+  Boolean $disable_dns                            = false,
+  Boolean $log_dhcp                               = false,
+  Boolean $log_dns                                = false,
+  Hash $upstream_servers                          = {},
+  Optional[Stdlib::Compat::Ipv4] $pxe_next_server = undef,
+  String $pxe_filename                            = 'pxelinux.0',
+  Hash $dhcp_ranges                               = {},
+  Hash $static_hosts                              = {},
 ) inherits dnsmasq::params {
-
-  if $pxe and ! $pxe_range_start {
-    fail('Parameters pxe_range_start, pxe_range_stop are required if pxe = true.')
-  }
 
   package { $dnsmasq::params::package_name:
     ensure => $ensure ? { 'absent' => 'purged', default => $ensure },
@@ -108,9 +114,10 @@ class dnsmasq(
     notify  => Service[$dnsmasq::params::service_name],
   }
 
-
   service { $dnsmasq::params::service_name:
-    ensure => $ensure ? { 'present' => 'running', 'absent' => undef },
-    enable => $ensure ? { 'present' => true,      'absent' => undef },
+    ensure     => $ensure ? { 'present' => 'running', 'absent' => undef },
+    enable     => $ensure ? { 'present' => true,      'absent' => undef },
+    hasstatus  => true,
+    hasrestart => true,
   }
 }
