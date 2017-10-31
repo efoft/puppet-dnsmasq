@@ -13,14 +13,23 @@ Simple:
 include dnsmasq
 ```
 
-Configuration cat be stored in hiera, e.g.:
+Configuration can be stored in hiera, e.g.:
 ```
-dnsmasq::dhcp_ranges:
-  - start: 10.1.1.20
+dhcp_ranges:
+  registered:
+    start: 10.1.1.20
     end: 10.1.1.30
-    name: br0
+    static_only: true
     ttl: 3h
-dnsmasq::static_hosts:
+  public:
+    start: 10.1.1.31
+    end:   10.1.1.40
+    ttl: 21600
+  pxe:
+    start: 10.1.1.31
+    end:   10.1.1.40
+    pxe:   true
+static_hosts:
   testhost1: 
     ip: 10.1.1.22
     mac: '00:00:00:0c:be:12'

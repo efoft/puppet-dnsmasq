@@ -20,22 +20,22 @@ no-hosts
 <% if @addn_hosts -%>
 addn-hosts=<%= @addn_hosts %>
 <% end -%>
-<% if @listen_interfaces -%>
+<% if !@listen_interfaces.empty? -%>
 <% @listen_interfaces.each do |iface| -%>
 interface=<%= iface %>
 <% end -%>
 <% end -%>
-<% if @listen_addresses -%>
+<% if !@listen_addresses.empty? -%>
 <% @listen_addresses.each do |addr| -%>
 listen-address=<%= addr %>
 <% end -%>
 <% end -%>
-<% if @except_interfaces -%>
+<% if !@except_interfaces.empty? -%>
 <% @except_interfaces.each do |iface| -%>
 except-interface=<%= iface %>
 <% end -%>
 <% end -%>
-<% if @no_dhcp_interfaces -%>
+<% if @no_dhcp_interfaces and !@no_dhcp_interfaces.empty? -%>
 <% @no_dhcp_interfaces.each do |iface| -%>
 no-dhcp-interface=<%= iface %>
 <% end -%>
@@ -57,17 +57,18 @@ server=/<%= domain %>/<%= server %>
 <% end -%>
 <% end -%>
 
-<% if @pxe -%>
 # this section for clients booting via network
 dhcp-vendorclass=pxe,PXEClient
-dhcp-range=net:pxe,<%= @pxe_range_start %>,<%= @pxe_range_end %>
-dhcp-boot=net:pxe,<%= @pxe_boot_file %><% if @pxe_listen_ip %>,<%= @pxe_listen_ip %><% end -%>
-<% end -%>
+dhcp-boot=net:pxe,<%= @pxe_filename %><% if @pxe_next_server %>,<%= @pxe_next_server %><% end %>
 
 <% if ! @dhcp_ranges.empty? -%>
 # dynamic and static dhcp ranges
-<% @dhcp_ranges.each do |r| -%>
-dhcp-range=<% if r['name'] %><%= r['name'] %>,<% end %><%= r['start'] %>,<%= r['end'] %><% if r['ttl'] %>,<%= r['ttl'] %><% end %> 
+<% @dhcp_ranges.each do |name, r| -%>
+<% if r['pxe'] -%>
+dhcp-range=net:pxe,<%= r['start'] %>,<% if r['static_only'] %>static<% else %><%= r['end'] %><% end %><% if r['ttl'] %>,<%= r['ttl'] %><% end %>
+<% else -%>
+dhcp-range=<%= name %>,<%= r['start'] %>,<% if r['static_only'] %>static<% else %><%= r['end'] %><% end %><% if r['ttl'] %>,<%= r['ttl'] %><% end %> 
+<% end -%>
 <% end -%>
 <% end -%>
 
