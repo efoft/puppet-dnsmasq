@@ -5,6 +5,13 @@
 # which is not managed by the class.
 #
 # === Parameters ===
+# [*ensure*]
+#   If set to `absent` then dnsmasq packed will be purged.
+#
+# [*service_ensure*]
+#   Option to manage service separately from *ensure* param.
+#   It only plays a role when *ensure* is present. If absent then the service is unmanaged anyway.
+#   Default: running
 #
 # [*bogis_priv*]
 #   Do not forward queries with private IP to upstream servers.
@@ -84,6 +91,7 @@
 #
 class dnsmasq(
   Enum['present','absent'] $ensure                = 'present',
+  Enum['running','stopped'] $service_ensure       = 'running',
   Boolean $bogus_priv                             = true,
   Boolean $domain_needed                          = true,
   Boolean $read_ethers                            = false,
@@ -114,9 +122,14 @@ class dnsmasq(
     notify  => Service[$dnsmasq::params::service_name],
   }
 
+  $service_enable = $service_ensure ?
+  {
+    'running' => true,
+    'stopped' => false
+  }
   service { $dnsmasq::params::service_name:
-    ensure     => $ensure ? { 'present' => 'running', 'absent' => undef },
-    enable     => $ensure ? { 'present' => true,      'absent' => undef },
+    ensure     => $ensure ? { 'present' => $service_ensure, 'absent' => undef },
+    enable     => $ensure ? { 'present' => $service_enable, 'absent' => undef },
     hasstatus  => true,
     hasrestart => true,
   }
