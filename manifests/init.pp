@@ -84,6 +84,10 @@
 #   { 'hostname' => { 'ip' => '192.168.1.10', 'mac' => '00:00:00:0c:be:12', 'comment' => 'John's laptop' }...}
 #   'comment' is optional and used for description only.
 #
+# [*include_conf_d*]
+#   Whether to include dnsmasq.d directory into config. It proved that empty dnsmasq.d leads to config error on el6.
+#   Default: false
+#
 class dnsmasq(
   Enum['present','absent'] $ensure                = 'present',
   Boolean $bogus_priv                             = true,
@@ -103,6 +107,7 @@ class dnsmasq(
   String $pxe_filename                            = 'pxelinux.0',
   Hash $dhcp_ranges                               = {},
   Hash $static_hosts                              = {},
+  Boolean $include_conf_d                         = false,
 ) inherits dnsmasq::params {
 
   package { $dnsmasq::params::package_name:

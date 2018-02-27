@@ -1,6 +1,6 @@
 {
         "name": "efoft-dnsmasq",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "author": "efoft",
         "license": "Apache-2.0",
         "source": "https://github.com/efoft/puppet-dnsmasq.git",
