@@ -75,7 +75,7 @@ dhcp-range=<%= name %>,<%= r['start'] %>,<% if r['static_only'] %>static<% else 
 <% if ! @static_hosts.empty? -%>
 # static hosts declaration
 <% @static_hosts.sort_by {|host,options| options['ip'].to_i}.each do |host,options| -%>
-dhcp-host=<%= options['mac'] %>,<%= options['ip'] %>
+dhcp-host=<%= options['mac'] %>,<%= host %>,<%= options['ip'] %>
 <% end -%>
 <% end -%>
 <% if @include_conf_d -%>
