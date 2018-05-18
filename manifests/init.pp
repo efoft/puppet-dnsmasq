@@ -52,18 +52,22 @@
 # [*upstream_servers*]
 #   Servers to query for specific domain. Format: { <domain> => <server ipa>, ... }
 #
-# [*pxe_next_server*]
+# [*next_server*]
 #   IP of pxe boot server. If omitted then dnsmasq assumes IP of this server.
+#   This is  global setting, it can be overriden on range level.
 #
-# [*pxe_filename*]
+# [*filename*]
 #   Name of boot image file for pxe booting.
+#   This is  global setting, it can be overriden on range level.
 #
 # [*dhcp_ranges*]
 #   Hash specifying ranges of IP addresses. It can optionally contain the keys:
 #   - static_only: only static hosts are served
 #   - ttl: lease time, if not specified default 1h is used
 #   - pxe: set to true to enable pxe booting with this range
-#   - next_server: IP of pxe boot server, if omitted then IP of this server is used
+#   - arch: number of PXEClient:Arch class to distinguish between BIOS, UEFI etc. boot ROMS
+#   - next_server: IP of pxe boot server, if omitted then module level next_server is used
+#   - filename: name of pxe boot image, if omittet then module level filename is used
 #   Example (hiera format):
 #   ---
 #   registered:
@@ -103,8 +107,8 @@ class dnsmasq(
   Boolean $log_dhcp                               = false,
   Boolean $log_dns                                = false,
   Hash $upstream_servers                          = {},
-  Optional[Stdlib::Compat::Ipv4] $pxe_next_server = undef,
-  String $pxe_filename                            = 'pxelinux.0',
+  Optional[Stdlib::Compat::Ipv4] $next_server     = undef,
+  String $filename                                = 'pxelinux.0',
   Hash $dhcp_ranges                               = {},
   Hash $static_hosts                              = {},
   Boolean $include_conf_d                         = false,

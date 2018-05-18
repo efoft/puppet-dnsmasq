@@ -57,18 +57,17 @@ server=/<%= domain %>/<%= server %>
 <% end -%>
 <% end -%>
 
-# this section for clients booting via network
-dhcp-vendorclass=pxe,PXEClient
-dhcp-boot=net:pxe,<%= @pxe_filename %><% if @pxe_next_server %>,<%= @pxe_next_server %><% end %>
-
 <% if ! @dhcp_ranges.empty? -%>
 # dynamic and static dhcp ranges
 <% @dhcp_ranges.each do |name, r| -%>
 <% if r['pxe'] -%>
-dhcp-range=net:pxe,<%= r['start'] %>,<% if r['static_only'] %>static<% else %><%= r['end'] %><% end %><% if r['ttl'] %>,<%= r['ttl'] %><% end %>
+dhcp-vendorclass=<%= name %>,PXEClient<% if r.has_key? 'arch' %>:Arch:<%= r['arch'] %><% end %>
+dhcp-boot=net:<%= name %>,<% if r.has_key? 'filename' %><%= r['filename'] %><% else %><%= @filename %><% end %><% if r.has_key? 'next_server' %>,,<%= r['next_server'] %><% elsif @next_server %>,,<%= @next_server %><% end %>
+dhcp-range=net:<%= name %>,<%= r['start'] %>,<% if r['static_only'] %>static<% else %><%= r['end'] %><% end %><% if r['ttl'] %>,<%= r['ttl'] %><% end %>
 <% else -%>
 dhcp-range=<%= name %>,<%= r['start'] %>,<% if r['static_only'] %>static<% else %><%= r['end'] %><% end %><% if r['ttl'] %>,<%= r['ttl'] %><% end %> 
 <% end -%>
+
 <% end -%>
 <% end -%>
 
