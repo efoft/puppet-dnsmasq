@@ -107,7 +107,7 @@ class dnsmasq(
   Boolean $log_dhcp                               = false,
   Boolean $log_dns                                = false,
   Hash $upstream_servers                          = {},
-  Optional[Stdlib::Compat::Ipv4] $next_server     = undef,
+  Optional[Stdlib::Ip::Address] $next_server      = undef,
   String $filename                                = 'pxelinux.0',
   Hash $dhcp_ranges                               = {},
   Hash $static_hosts                              = {},
