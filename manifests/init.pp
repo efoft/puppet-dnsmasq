@@ -1,66 +1,35 @@
-# === Class dnsmasq ===
-# Installs and configures dnsmasq server.
+# @summary Installs and configures dnsmasq server.
+#   All params that are not covered by this class can be added to dnsmasq via separate .conf files under /etc/dnsmasq.d
+#   which is not managed by the class.
 #
-# All params that are not covered by this class can be added to dnsmasq via separate .conf files under /etc/dnsmasq.d
-# which is not managed by the class.
-#
-# === Parameters ===
-# [*ensure*]
-#   If set to `absent` then dnsmasq package will be purged.
-#
-# [*bogis_priv*]
-#   Do not forward queries with private IP to upstream servers.
-#   Default: true
-#
-# [*domain_needed*]
-#   Do not forward plain name (without domain) queries to upstream servers.
-#   Default: true
-#
-# [*read_ethers*]
-#   Serve clients with static hosts declarations described in /etc/ethers file.
-#   Default: false
-#
-# [*no_hosts*]
-#   Do not use info from /etc/hosts when answering queries.
-#   Default: false
-#
-# [*addn_hosts*]
-#   Can be specified additional hosts file apart from /etc/hosts.
-#
-# [*listen_interfaces*]
-#   Array of interfaces to listen to. If the same interface is mentioned in *except_interfaces* it's excluded.
+# @param ensure              If set to `absent` then dnsmasq package will be purged.
+# @param bogis_priv          Do not forward queries with private IP to upstream servers.
+# @param domain_needed       Do not forward plain name (without domain) queries to upstream servers.
+# @param read_ethers         Serve clients with static hosts declarations described in /etc/ethers file.
+# @param no_hosts            Do not use info from /etc/hosts when answering queries.
+# @param addn_hosts          Can be specified additional hosts file apart from /etc/hosts.
+# @param listen_interfaces   Array of interfaces to listen to. If the same interface is mentioned in *except_interfaces* it's excluded.
 #   Loopback is always auto-added.
-#
-# [*listen_addresses*]
+
+# @param listen_addresses
 #   IP to listen on. Can be mixed with *listen_interfaces*. If *listen_interfaces* is not specified, then loopback
 #   is not included in resulting set and must be implicitly set here as well.
 #
-# [*except_interfaces*]
-#   Do not listen on these interfaces. Overrides *listen_interfaces*.
+# @param except_interfaces    Do not listen on these interfaces. Overrides *listen_interfaces*.
+# @param no_dhcp_interfaces   Disable serving dhcp requests on these interfaces, leaving only dns functionality.
+# @param disable_dns          It set to true, port=0 is added to config which completely disables dns functionality of dnsmasq.
+# @param log-dhcp & log-dns   Enable or disable logging of queries and dnsmasq answers.
+# @param upstream_servers     Servers to query for specific domain. Format: { <domain> => <server ipa>, ... }
 #
-# [*no_dhcp_interfaces*]
-#   Disable serving dhcp requests on these interfaces, leaving only dns functionality.
-#
-# [*disable_dns*]
-#   It set to true, port=0 is added to config which completely disables dns functionality of dnsmasq.
-#   Default: false
-#
-# [*log-dhcp*] & [*log-dns*]
-#   Enable or disable logging of queries and dnsmasq answers.
-#   Default: false
-#
-# [*upstream_servers*]
-#   Servers to query for specific domain. Format: { <domain> => <server ipa>, ... }
-#
-# [*next_server*]
+# @param next_server
 #   IP of pxe boot server. If omitted then dnsmasq assumes IP of this server.
 #   This is  global setting, it can be overriden on range level.
 #
-# [*filename*]
+# @param filename
 #   Name of boot image file for pxe booting.
 #   This is  global setting, it can be overriden on range level.
 #
-# [*dhcp_ranges*]
+# @param dhcp_ranges
 #   Hash specifying ranges of IP addresses. It can optionally contain the keys:
 #   - static_only: only static hosts are served
 #   - ttl: lease time, if not specified default 1h is used
@@ -83,49 +52,48 @@
 #     end:   192.168.1.299
 #     pxe:   true
 #
-# [*static_hosts*]
+# @param static_hosts
 #   Static hosts declaration. Format:
 #   { 'hostname' => { 'ip' => '192.168.1.10', 'mac' => '00:00:00:0c:be:12', 'comment' => 'John's laptop' }...}
 #   'comment' is optional and used for description only.
 #
-# [*include_conf_d*]
-#   Whether to include dnsmasq.d directory into config. It proved that empty dnsmasq.d leads to config error on el6.
-#   Default: false
+# @param include_dir
+#   E.g. to include dnsmasq.d directory into config. It proved that empty dnsmasq.d leads to config error on EL6.
 #
 class dnsmasq(
-  Enum['present','absent'] $ensure                = 'present',
-  Boolean $bogus_priv                             = true,
-  Boolean $domain_needed                          = true,
-  Boolean $read_ethers                            = false,
-  Boolean $no_hosts                               = false,
-  Optional[String] $addn_hosts                    = undef,
-  Array $listen_interfaces                        = [],
-  Array $listen_addresses                         = [],
-  Array $except_interfaces                        = [],
-  Array $no_dhcp_interfaces                       = [],
-  Boolean $disable_dns                            = false,
-  Boolean $log_dhcp                               = false,
-  Boolean $log_dns                                = false,
-  Hash $upstream_servers                          = {},
-  Optional[Stdlib::Ip::Address] $next_server      = undef,
-  String $filename                                = 'pxelinux.0',
-  Hash $dhcp_ranges                               = {},
-  Hash $static_hosts                              = {},
-  Boolean $include_conf_d                         = false,
+  Enum['present','absent']      $ensure             = 'present',
+  Boolean                       $bogus_priv         = true,
+  Boolean                       $domain_needed      = true,
+  Boolean                       $read_ethers        = false,
+  Boolean                       $no_hosts           = false,
+  Optional[String]              $addn_hosts         = undef,
+  Array                         $listen_interfaces  = [],
+  Array                         $listen_addresses   = [],
+  Array                         $except_interfaces  = [],
+  Array                         $no_dhcp_interfaces = [],
+  Boolean                       $disable_dns        = false,
+  Boolean                       $log_dhcp           = false,
+  Boolean                       $log_dns            = false,
+  Hash                          $upstream_servers   = {},
+  Optional[Stdlib::Ip::Address] $next_server        = undef,
+  String                        $filename           = 'pxelinux.0',
+  Hash                          $dhcp_ranges        = {},
+  Hash                          $static_hosts       = {},
+  Stdlib::Unixpath              $include_dir        = '',
 ) inherits dnsmasq::params {
 
-  package { $dnsmasq::params::package_name:
+  package { $package_name:
     ensure => $ensure ? { 'absent' => 'purged', default => $ensure },
   }
 
-  file { $dnsmasq::params::cfgfile:
+  file { $cfgfile:
     ensure  => $ensure,
-    content => template('dnsmasq/dnsmasq.conf.erb'),
-    require => Package[$dnsmasq::params::package_name],
-    notify  => Service[$dnsmasq::params::service_name],
+    content => template("${module_name}/dnsmasq.conf.erb"),
+    require => Package[$package_name],
+    notify  => Service[$service_name],
   }
 
-  service { $dnsmasq::params::service_name:
+  service { $service_name:
     ensure     => $ensure ? { 'present' => 'running', default => undef },
     enable     => $ensure ? { 'present' => true, default => undef },
     hasstatus  => true,
