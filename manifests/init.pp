@@ -20,37 +20,31 @@
 # @param disable_dns          It set to true, port=0 is added to config which completely disables dns functionality of dnsmasq.
 # @param log-dhcp & log-dns   Enable or disable logging of queries and dnsmasq answers.
 # @param upstream_servers     Servers to query for specific domain. Format: { <domain> => <server ipa>, ... }
-#
-# @param next_server
-#   IP of pxe boot server. If omitted then dnsmasq assumes IP of this server.
-#   This is  global setting, it can be overriden on range level.
-#
-# @param filename
-#   Name of boot image file for pxe booting.
-#   This is  global setting, it can be overriden on range level.
+# @param pxe_enable           If to include entries allowing pxe clients to receive boot information.
+# @param tftp_server          IP of tftp server to boot from. If omitted then dnsmasq assumes IP of this server.
+# @param bootfile_bios        Boot file name sent to legacy bios pxe clients.
+# @param bootfile_efi_x64     Boot file name sent to UEFI x86_64 pxe clients.
+# @param bootfile_efi_ia32    Boot file name sent to UEFI x86(ia32) pxe clients.
 #
 # @param dhcp_ranges
 #   Hash specifying ranges of IP addresses. It can optionally contain the keys:
 #   - static_only: only static hosts are served
 #   - ttl: lease time, if not specified default 1h is used
-#   - pxe: set to true to enable pxe booting with this range
-#   - arch: number of PXEClient:Arch class to distinguish between BIOS, UEFI etc. boot ROMS
-#   - next_server: IP of pxe boot server, if omitted then module level next_server is used
-#   - filename: name of pxe boot image, if omittet then module level filename is used
+#   - options: key-value pairs sent as dhcp-options to clients within this range. See 'dnsmasq --help dhcp'. Can use number or name.
 #   Example (hiera format):
 #   ---
 #   registered:
 #     start: 192.168.1.2
-#     end:   192.168.1.199
 #     static_only: true
 #   public:
 #     start: 192.168.1.220
 #     end:   192.168.1.240
 #     ttl:   5m
-#   pxe:
-#     start: 192.168.1.290
-#     end:   192.168.1.299
-#     pxe:   true
+#   provision:
+#     start: 192.168.1.190
+#     end:   192.168.1.199
+#     options:
+#       router: 192.168.1.254
 #
 # @param static_hosts
 #   Static hosts declaration. Format:
@@ -60,7 +54,7 @@
 # @param include_dir
 #   E.g. to include dnsmasq.d directory into config. It proved that empty dnsmasq.d leads to config error on EL6.
 #
-class dnsmasq(
+class dnsmasq (
   Enum['present','absent']      $ensure             = 'present',
   Boolean                       $bogus_priv         = true,
   Boolean                       $domain_needed      = true,
@@ -75,8 +69,11 @@ class dnsmasq(
   Boolean                       $log_dhcp           = false,
   Boolean                       $log_dns            = false,
   Hash                          $upstream_servers   = {},
-  Optional[Stdlib::Ip::Address] $next_server        = undef,
-  String                        $filename           = 'pxelinux.0',
+  Boolean                       $pxe_enable         = false,
+  Optional[Stdlib::Ip::Address] $tftp_server        = undef,
+  String                        $bootfile_bios      = 'pxelinux.0',
+  String                        $bootfile_efi_x64   = 'bootx64.efi',
+  String                        $bootfile_efi_ia32  = 'syslinux.efi',
   Hash                          $dhcp_ranges        = {},
   Hash                          $static_hosts       = {},
   Stdlib::Unixpath              $include_dir        = '',

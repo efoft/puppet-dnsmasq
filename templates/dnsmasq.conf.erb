@@ -50,28 +50,34 @@ log-dhcp
 <% if @log_dns -%>
 log-queries
 <% end -%>
-
 <% if ! @upstream_servers.empty? -%>
 <% @upstream_servers.each do |domain,server| -%>
 server=/<%= domain %>/<%= server %>
 <% end -%>
 <% end -%>
+<% if @pxe_enable -%>
+dhcp-match=set:efi-ia32,option:client-arch,6
+dhcp-match=set:efi-x86_64,option:client-arch,7
+dhcp-match=set:bios,option:client-arch,0
 
+dhcp-boot=tag:bios,"<%= @bootfile_bios %>"<% if @tftp_server %>,,<%= @tftp_server  %><% end %>
+dhcp-boot=tag:efi-x86_64,"<%= @bootfile_efi_x64 %>"<% if @tftp_server %>,,<%= @tftp_server  %><% end %>
+dhcp-boot=tag:efi-ia32,"<%= @bootfile_efi_ia32 %>"<% if @tftp_server %>,,<%= @tftp_server  %><% end %>
+<% end -%>
 <% if ! @dhcp_ranges.empty? -%>
+
 # dynamic and static dhcp ranges
 <% @dhcp_ranges.each do |name, r| -%>
-<% if r['pxe'] -%>
-dhcp-vendorclass=<%= name %>,PXEClient<% if r.has_key? 'arch' %>:Arch:<%= r['arch'] %><% end %>
-dhcp-boot=net:<%= name %>,<% if r.has_key? 'filename' %><%= r['filename'] %><% else %><%= @filename %><% end %><% if r.has_key? 'next_server' %>,,<%= r['next_server'] %><% elsif @next_server %>,,<%= @next_server %><% end %>
-dhcp-range=net:<%= name %>,<%= r['start'] %>,<% if r['static_only'] %>static<% else %><%= r['end'] %><% end %><% if r['ttl'] %>,<%= r['ttl'] %><% end %>
-<% else -%>
-dhcp-range=<%= name %>,<%= r['start'] %>,<% if r['static_only'] %>static<% else %><%= r['end'] %><% end %><% if r['ttl'] %>,<%= r['ttl'] %><% end %> 
-<% end -%>
-
+dhcp-range=set:<%= name %>,<%= r['start'] %>,<% if r['static_only'] %>static<% else %><%= r['end'] %><% end %><% if r['ttl'] %>,<%= r['ttl'] %><% end %>
+<% if r['options'] -%>
+<% r['options'].each do |k,v| -%>
+dhcp-option=tag:<%= name %>,option:<%= k %>,<%= v %>
 <% end -%>
 <% end -%>
-
+<% end -%>
+<% end -%>
 <% if ! @static_hosts.empty? -%>
+
 # static hosts declaration
 <% @static_hosts.sort_by {|host,options| options['ip'].to_i}.each do |host,options| -%>
 dhcp-host=<%= options['mac'] %>,<%= host %>,<%= options['ip'] %>
