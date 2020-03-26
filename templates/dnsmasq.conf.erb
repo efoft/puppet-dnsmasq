@@ -71,7 +71,7 @@ dhcp-boot=tag:efi-ia32,"<%= @bootfile_efi_ia32 %>"<% if @tftp_server %>,,<%= @tf
 dhcp-range=set:<%= name %>,<%= r['start'] %>,<% if r['static_only'] %>static<% else %><%= r['end'] %><% end %><% if r['ttl'] %>,<%= r['ttl'] %><% end %>
 <% if r['options'] -%>
 <% r['options'].each do |k,v| -%>
-dhcp-option=tag:<%= name %>,option:<%= k %>,<%= v %>
+dhcp-option=tag:<%= name %>,option:<%= k %><% if v %>,<%= v %><% end %>
 <% end -%>
 <% end -%>
 <% end -%>
